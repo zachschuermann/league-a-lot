@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>League-a-Lot</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="dist/uPlot.min.css">
+		<link rel="stylesheet" href="style.css">
+	</head>
+	<body>
+		<script src="dist/uPlot.iife.min.js"></script>
+        <script src="plot.js"></script>
+        <div>
+            <p>Query the League of Legends API to view match history plot. Click and drag on the plot to zoom in, and double-click to zoom out.</p>
+            <form id="form">
+                Enter name: <input type="text" name="username">
+                <input type="submit" value="Search">
+            </form>
+            <div id="loading">
+                <p>Loading...</p>
+            </div>
+            <div id="info"></div> <!-- TODO -->
+        </div>
+	</body>
+</html>
