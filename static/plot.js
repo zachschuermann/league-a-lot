@@ -17,18 +17,24 @@ const plot = (name) => {
     fetch(API + 'matches/' + name)
         .then(response => response.json())
         .then(data => {
-            plotter(data['times'], data['values']);
+            if (data['ok']) {
+                plotter(name, data['times'], data['values']);
+            } else {
+                alert("unable to plot " + name);
+            }
             document.getElementById("loading").style.display = "none";
+            let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
+            document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
         });
 }
 
-const plotter = (times, values) => {
+const plotter = (name, times, values) => {
     const { linear, spline, stepped, bars } = uPlot.paths;
 
     let data = [times, values];
 
     const opts = {
-	    title: "League Time",
+	    title: name + "'s League Time",
         ...getSize(),
 	    series: [
 		    {},

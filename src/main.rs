@@ -6,6 +6,10 @@ use riven::{
 };
 use serde::Serialize;
 use std::env;
+use tokio::time::sleep;
+use std::time::Duration;
+use once_cell::sync::Lazy;
+// use rand::Rng; TODO
 
 #[macro_use]
 extern crate rocket;
@@ -26,15 +30,17 @@ const MAX_RETRIES: usize = 20;
 /// uPlot expects a list of timestamps and a list of data points
 #[derive(Serialize)]
 struct MatchInfo {
+    ok: bool,
     times: Vec<i64>,
     values: Vec<i64>,
 }
 
 #[get("/<summoner>")]
 async fn matches(summoner: String) -> Json<MatchInfo> {
-    let matches = get_match_history(&summoner)
-        .await
-        .expect("get match history");
+    let matches = match get_match_history(&summoner).await {
+        Ok(ms) => ms,
+        Err(_) => return Json(MatchInfo { ok: false, times: vec![], values: vec![] }),
+    };
     let match_futures = matches
         .iter()
         .map(|m| get_match(m.game_id))
@@ -42,12 +48,12 @@ async fn matches(summoner: String) -> Json<MatchInfo> {
     let matches = join_all(match_futures).await;
     let (mut times, mut values): (Vec<_>, Vec<_>) = matches
         .iter()
-        .map(|m| m.as_ref().expect("get match ok"))
+        .map(|m| m.as_ref().expect("get match ok")) // TODO
         .map(|m| (m.game_creation / 1000, m.game_duration / 60))
         .unzip();
     times.reverse();
     values.reverse();
-    Json(MatchInfo { times, values })
+    Json(MatchInfo { ok: true, times, values })
 }
 
 #[launch]
@@ -57,7 +63,7 @@ fn rocket() -> rocket::Rocket {
 
 async fn get_match_history(
     summoner: &str,
-) -> Result<Vec<MatchReference>, Box<dyn std::error::Error>> {
+) -> Result<Vec<MatchReference>, &str> {
     let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
     let riot_api = RiotApi::with_key(api_key); // TODO once_cell
 
@@ -65,16 +71,26 @@ async fn get_match_history(
     let summoner = riot_api
         .summoner_v4()
         .get_by_summoner_name(Region::NA, summoner)
-        .await
-        .expect("Get summoner failed.")
-        .expect("There is no summoner with that name.");
+        .await;
+        //.expect("Get summoner failed.")
+        //.expect("There is no summoner with that name.");
+
+    // TODO ugly
+    if summoner.is_err() {
+        return Err("failed get summoner request");
+    }
+    let summoner = summoner.unwrap();
+    if summoner.is_none() {
+        return Err("no summoner found");
+    }
+    let summoner = summoner.unwrap();
 
     // println!("\n{}\n", &summoner.account_id);
 
     let mut start_index = 0;
     let mut matches = vec![];
     loop {
-        let mut match_list = riot_api
+        let match_list = riot_api
             .match_v4()
             .get_matchlist(
                 Region::NA,
@@ -87,9 +103,18 @@ async fn get_match_history(
                 None,
                 None,
             )
-            .await
-            .expect("Get matchlist failed.")
-            .expect("No matchlist for account id.");
+            .await;
+            // .expect("Get matchlist failed.")
+            // .expect("No matchlist for account id.");
+        // TODO ugly
+        if match_list.is_err() {
+            return Err("Get matchlist failed.");    
+        }
+        let match_list = match_list.unwrap();
+        if match_list.is_none() {
+            return Err("No matchlist for account id.");
+        }
+        let mut match_list = match_list.unwrap();
         if match_list.matches.is_empty() {
             break;
         }
@@ -102,11 +127,14 @@ async fn get_match_history(
 }
 
 async fn get_match(game_id: i64) -> Result<Match, &'static str> {
-    let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
-    let riot_api = RiotApi::with_key(api_key); // TODO once_cell
+    let riot_api = Lazy::new(|| {
+        let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
+        RiotApi::with_key(api_key)
+    });
+    // let mut rng = rand::thread_rng(); TODO
 
     // do x retries max
-    for _ in 0..MAX_RETRIES {
+    for n in 1..=MAX_RETRIES {
         let match_ = riot_api.match_v4().get_match(Region::NA, game_id).await;
 
         if let Ok(ok_match) = match_ {
@@ -114,6 +142,8 @@ async fn get_match(game_id: i64) -> Result<Match, &'static str> {
                 return Ok(m);
             }
         }
+        // backoff
+        sleep(Duration::from_secs(n.pow(2) as u64)).await;
     }
 
     Err("Failed to get match")

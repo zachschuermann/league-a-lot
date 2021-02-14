@@ -4,6 +4,18 @@ html {
     margin: auto
 }
 
+body {
+    font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+    font-size: 0.9em
+}
+
+.main {
+    text-align: left;
+    max-width: 55em;
+    margin: 3em auto 2em;
+    line-height: 1.5em;
+}
+
 .uplot {
     margin: auto
 }

@@ -11,16 +11,17 @@
 	<body>
 		<script src="dist/uPlot.iife.min.js"></script>
         <script src="plot.js"></script>
-        <div>
+        <div class="main">
             <p>Query the League of Legends API to view match history plot. Click and drag on the plot to zoom in, and double-click to zoom out.</p>
             <form id="form">
-                Enter name: <input type="text" name="username">
+                Enter username: <input type="text" name="username">
                 <input type="submit" value="Search">
             </form>
             <div id="loading">
                 <p>Loading...</p>
             </div>
-            <div id="info"></div> <!-- TODO -->
+            <div id="info"></div>
+            <!-- <div id="plot"></div> -->
         </div>
 	</body>
 </html>
