@@ -1,4 +1,5 @@
-const API = "https://leaguealot.zvs.io/";
+//const API = "https://leaguealot.zvs.io/";
+const API = "http://localhost:8000/";
 
 const tester = (e) => {
     e.preventDefault();
@@ -6,12 +7,6 @@ const tester = (e) => {
     document.getElementById("loading").style.display = "block";
     plot(username);
 }
-
-const init = () => {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("form").onsubmit = tester;
-}
-window.onload = init;
 
 const plot = (name) => {
     fetch(API + 'matches/' + name)
@@ -25,6 +20,7 @@ const plot = (name) => {
             document.getElementById("loading").style.display = "none";
             let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
             document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
+            table_load();
         });
 }
 
