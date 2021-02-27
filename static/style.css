@@ -16,6 +16,29 @@ body {
     line-height: 1.5em;
 }
 
+.side-by-side {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap
+}
+
+table {
+    margin: 1em;
+    border-collapse: collapse
+}
+
+td, th {
+    padding: 0 20px
+}
+
+tr:hover {
+    background: #e8e6e7
+}
+
+.half {
+    max-width: 25em
+}
+
 .uplot {
     margin: auto
 }

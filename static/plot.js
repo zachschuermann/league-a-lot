@@ -7,12 +7,6 @@ const tester = (e) => {
     plot(username);
 }
 
-const init = () => {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("form").onsubmit = tester;
-}
-window.onload = init;
-
 const plot = (name) => {
     fetch(API + 'matches/' + name)
         .then(response => response.json())
@@ -25,6 +19,7 @@ const plot = (name) => {
             document.getElementById("loading").style.display = "none";
             let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
             document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
+            table_load();
         });
 }
 
