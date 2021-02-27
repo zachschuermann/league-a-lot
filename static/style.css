@@ -14,6 +14,9 @@ body {
     max-width: 55em;
     margin: 3em auto 2em;
     line-height: 1.5em;
+}
+
+.side-by-side {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap
@@ -33,7 +36,7 @@ tr:hover {
 }
 
 .half {
-    max-width: 50%
+    max-width: 25em
 }
 
 .uplot {

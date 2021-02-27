@@ -3,7 +3,7 @@ const fetch_table = () => {
         .then(response => response.json())
         .then(data => {
             let table = "<table>";
-            table += "<tr><th>Username</th><th>First Scraped Match</th></tr>";
+            table += "<tr><th>Username</th><th>Last Match Scraped</th></tr>";
             for (i in data['trackers']) {
                 let date = new Date(data['trackers'][i]['since'] * 1000);
                 table += "<tr><td>" + data['trackers'][i]['name'] + "</td>"; 

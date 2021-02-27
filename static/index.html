@@ -13,15 +13,16 @@
         <script src="plot.js"></script>
         <script src="table.js"></script>
         <div class="main">
-            <div class="half">
-                <p>Query the League of Legends API to view match history plot. Click and drag on the plot to zoom in, and double-click to zoom out.</p>
-                <p>Recently scraped usernames and their first scrape times are shown on the right.</p>
-                <form id="form">
-                    Enter username: <input type="text" name="username">
-                    <input type="submit" value="Search">
-                </form>
-            </div>
-            <div id="table">
+            <div class="side-by-side">
+                <div class="half">
+                    <p>Query the League of Legends API to view match history plot. Click and drag on the plot to zoom in, and double-click to zoom out.</p>
+                    <p>Recently scraped usernames and their first scrape times are shown on the right.</p>
+                    <form id="form">
+                        Enter username: <input type="text" name="username">
+                        <input type="submit" value="Search">
+                    </form>
+                </div>
+                <div id="table"></div>
             </div>
             <div id="loading">
                 <p>Loading...</p>
