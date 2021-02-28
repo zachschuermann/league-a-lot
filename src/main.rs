@@ -1,7 +1,9 @@
 use serde::Serialize;
 use std::convert::TryInto;
 use std::sync::{Arc, Mutex};
-use rocket::State;
+use rocket::{Request, Response, State};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::Header;
 use std::collections::VecDeque;
 
 use league_a_lot::{get_all, get_match_history, get_match_history_since};
@@ -33,6 +35,23 @@ struct Recent(Arc<Mutex<VecDeque<String>>>);
 // each sled database.
 struct Index(sled::Db);
 struct Db(sled::Db);
+
+// implement CORS as a fairing
+struct CORS();
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to requests",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "https://lol.zvs.io"));
+    }
+}
 
 /// uPlot expects a list of timestamps and a list of data points
 #[derive(Serialize)]
@@ -175,5 +194,6 @@ fn rocket() -> rocket::Rocket {
         .manage(Recent(Arc::new(Mutex::new(VecDeque::new()))))
         .manage(Index(index))
         .manage(Db(db))
+        .attach(CORS())
         .mount("/", routes![matches, list])
 }
