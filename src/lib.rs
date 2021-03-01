@@ -57,7 +57,7 @@ pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<M
         .get_matchlist(
             Region::NA,
             &summoner.account_id,
-            Some(since * 1001), // need timestamp in ms
+            Some(since * 1000 + 1), // need timestamp in ms
             None, // Some(0),
             None,
             None, // Some(start + 604800000),
@@ -74,6 +74,7 @@ pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<M
     }
     let match_list = match_list.unwrap();
     if match_list.is_none() {
+        println!("no new matches for {} since {}", name, since);
         return Ok(vec![]);
     }
     let mut match_list = match_list.unwrap();
