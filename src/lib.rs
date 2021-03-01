@@ -1,17 +1,12 @@
-use once_cell::sync::Lazy;
 use riven::consts::Region;
 use riven::{
-    models::match_v4::{Match, MatchReference},
     RiotApi,
+    models::match_v4::{Match, MatchReference},
 };
-use std::time::Duration;
-use tokio::time::sleep;
-use std::env;
 use futures::future::join_all;
-// use rand::Rng; TODO
+use once_cell::sync::OnceCell;
 
-const MAX_RETRIES: usize = 20;
-
+pub static RIOT_API: OnceCell<RiotApi> = OnceCell::new();
 
 pub async fn get_all(matches: Vec<MatchReference>) -> (Vec<i64>, Vec<i64>) {
     let match_futures = matches
@@ -30,16 +25,11 @@ pub async fn get_all(matches: Vec<MatchReference>) -> (Vec<i64>, Vec<i64>) {
 }
 
 pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<MatchReference>, &str> {
-    let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
-    let riot_api = RiotApi::with_key(api_key); // TODO once_cell
-
     let name = summoner;
-    let summoner = riot_api
+    let summoner = RIOT_API.get().expect("riot api init")
         .summoner_v4()
         .get_by_summoner_name(Region::NA, summoner)
         .await;
-    //.expect("Get summoner failed.")
-    //.expect("There is no summoner with that name.");
 
     // TODO ugly
     if summoner.is_err() {
@@ -52,7 +42,7 @@ pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<M
     let summoner = summoner.unwrap();
 
     let mut matches = vec![];
-    let match_list = riot_api
+    let match_list = RIOT_API.get().expect("riot api init")
         .match_v4()
         .get_matchlist(
             Region::NA,
@@ -88,16 +78,11 @@ pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<M
 }
 
 pub async fn get_match_history(summoner: &str) -> Result<Vec<MatchReference>, &str> {
-    let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
-    let riot_api = RiotApi::with_key(api_key); // TODO once_cell
-
     let name = summoner;
-    let summoner = riot_api
+    let summoner = RIOT_API.get().expect("riot api init")
         .summoner_v4()
         .get_by_summoner_name(Region::NA, summoner)
         .await;
-    //.expect("Get summoner failed.")
-    //.expect("There is no summoner with that name.");
 
     // TODO ugly
     if summoner.is_err() {
@@ -114,7 +99,7 @@ pub async fn get_match_history(summoner: &str) -> Result<Vec<MatchReference>, &s
     let mut start_index = 0;
     let mut matches = vec![];
     loop {
-        let match_list = riot_api
+        let match_list = RIOT_API.get().expect("riot api init")
             .match_v4()
             .get_matchlist(
                 Region::NA,
@@ -128,8 +113,7 @@ pub async fn get_match_history(summoner: &str) -> Result<Vec<MatchReference>, &s
                 None,
             )
             .await;
-        // .expect("Get matchlist failed.")
-        // .expect("No matchlist for account id.");
+
         // TODO ugly
         if match_list.is_err() {
             return Err("Get matchlist failed.");
@@ -151,24 +135,19 @@ pub async fn get_match_history(summoner: &str) -> Result<Vec<MatchReference>, &s
 }
 
 pub async fn get_match(game_id: i64) -> Result<Match, &'static str> {
-    let riot_api = Lazy::new(|| {
-        let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
-        RiotApi::with_key(api_key)
-    });
-    // let mut rng = rand::thread_rng(); TODO
-
     // do x retries max
-    for n in 1..=MAX_RETRIES {
-        let match_ = riot_api.match_v4().get_match(Region::NA, game_id).await;
+    //for n in 1..=MAX_RETRIES {
+        //println!("try {}", n);
+    let match_ = RIOT_API.get().expect("riot api init").match_v4().get_match(Region::NA, game_id).await;
 
-        if let Ok(ok_match) = match_ {
-            if let Some(m) = ok_match {
-                return Ok(m);
-            }
+    if let Ok(ok_match) = match_ {
+        if let Some(m) = ok_match {
+            return Ok(m);
         }
-        // backoff
-        sleep(Duration::from_secs(n.pow(2) as u64)).await;
     }
+        // backoff
+        //sleep(Duration::from_secs(n.pow(2) as u64)).await;
+    //}
 
     Err("Failed to get match")
 }

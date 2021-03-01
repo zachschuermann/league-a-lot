@@ -5,8 +5,10 @@ use rocket::{Request, Response, State};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
 use std::collections::VecDeque;
+use riven::{RiotApi, RiotApiConfig};
+use std::env;
 
-use league_a_lot::{get_all, get_match_history, get_match_history_since};
+use league_a_lot::{get_all, get_match_history, get_match_history_since, RIOT_API};
 
 #[macro_use]
 extern crate rocket;
@@ -28,6 +30,7 @@ const RECENT_LEN: usize = 10;
 /// query sled.
 ///
 /// check out sled examples/structured.rs
+
 
 // state
 struct Recent(Arc<Mutex<VecDeque<String>>>);
@@ -190,6 +193,13 @@ async fn list(recent: State<'_, Recent>, index: State<'_, Index>) -> Json<TrackL
 fn rocket() -> rocket::Rocket {
     let index: sled::Db = sled::open("tracker_index").expect("open tracker_index database");
     let db = sled::open("league_db").expect("open league_db database");
+    let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
+    let riot_config = RiotApiConfig::with_key(api_key);
+    let riot_api = RiotApi::with_config(riot_config.preconfig_throughput());
+    if RIOT_API.set(riot_api).is_err() {
+        panic!("error setting riot api global client");
+    }
+
     rocket::ignite()
         .manage(Recent(Arc::new(Mutex::new(VecDeque::new()))))
         .manage(Index(index))
