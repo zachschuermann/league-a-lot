@@ -59,7 +59,7 @@ const plotter = (name, times, values) => {
 function getSize() {
 	return {
 		width: window.innerWidth - 50,
-		height: window.innerHeight - 200,
+		height: window.innerWidth / 3,
 	}
 }
 
