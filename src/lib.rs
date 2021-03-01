@@ -16,7 +16,16 @@ pub async fn get_all(matches: Vec<MatchReference>) -> (Vec<i64>, Vec<i64>) {
     let matches = join_all(match_futures).await;
     let (mut times, mut values): (Vec<_>, Vec<_>) = matches
         .iter()
-        .map(|m| m.as_ref().expect("get match ok")) // TODO
+        .map(|m| {
+            match m.as_ref() {
+                Ok(match_) => Some(match_),
+                Err(e) => {
+                    println!("get match error: {}", e);
+                    None
+                },
+            }
+        })
+        .flatten() 
         .map(|m| (m.game_creation / 1000, m.game_duration / 60))
         .unzip();
     times.reverse();
