@@ -7,7 +7,20 @@ const tester = (e) => {
     plot(username);
 }
 
+var dots = 0;
+const loadingDots = () => {
+    let s = "<p>Loading";
+    for (i = 0; i < dots; i++) {
+        s += ".";
+    }
+    dots += 1;
+    if (dots > 3) { dots = 0; }
+    s += "</p>";
+    document.getElementById("loading").innerHTML = s;
+}
+
 const plot = (name) => {
+    let interval = setInterval(loadingDots, 400);
     fetch(API + 'matches/' + name)
         .then(response => response.json())
         .then(data => {
@@ -17,6 +30,7 @@ const plot = (name) => {
                 alert("unable to plot " + name);
             }
             document.getElementById("loading").style.display = "none";
+            clearInterval(interval);
             let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
             document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
             table_load();

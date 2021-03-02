@@ -86,7 +86,7 @@ async fn matches(recent: State<'_, Recent>, index: State<'_, Index>, db: State<'
     let matches = match new_matches {
         Ok(ms) => ms,
         Err(_) => {
-            println!("ERROR");
+            println!("ERROR for {}", summoner);
             return Json(MatchInfo {
                 ok: false,
                 times: vec![],
