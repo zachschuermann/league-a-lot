@@ -40,6 +40,10 @@ const plot = (name) => {
 const plotter = (name, times, values) => {
     const { linear, spline, stepped, bars } = uPlot.paths;
 
+    const seriesStroke = darkMode ? "#59b7ff" : "#0079d6";
+    const axesStroke = darkMode ? "#f5f5f5" : "#050505";
+    const gridStroke = darkMode ? "#272b2e" : "#ebebeb";
+
     let data = [times, values];
 
     const opts = {
@@ -49,21 +53,40 @@ const plotter = (name, times, values) => {
 		    {},
 		    {
 			    label:  "game duration",
-			    stroke: "blue",
+			    stroke: seriesStroke,
 			    fill:   "rgba(0, 0, 255, 0.05)",
                 paths:  bars(),
                 value: (u, v) => v + " minutes",
 		    },
 	    ],
         axes: [
-				{},
 				{
-					values: (u, vals) => vals.map(v => v + " min")
+                    stroke: axesStroke,
+                    grid: {
+                        stroke: gridStroke,
+                        width: 1,
+                    },
+                    ticks: {
+                        stroke: gridStroke,
+                        width: 1,
+                    }
+                },
+				{
+                    stroke: axesStroke,
+					values: (u, vals) => vals.map(v => v + " min"),
+                    grid: {
+                        stroke: gridStroke,
+                        width: 1,
+                    },
+                    ticks: {
+                        stroke: gridStroke,
+                        width: 1,
+                    }
 				}
 			]
     };
 
-    let uplot = new uPlot(opts, data, document.body);
+    let uplot = new uPlot(opts, data, document.getElementById("plot"));
 
     window.addEventListener("resize", e => {
     	uplot.setSize(getSize());

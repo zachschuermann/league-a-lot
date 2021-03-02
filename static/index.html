@@ -1,18 +1,31 @@
 <!doctype html>
-<html>
+<html lang="en">
 	<head>
+		<title>League-a-lot</title>
 		<meta charset="utf-8">
-		<title>League-a-Lot</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<link rel="stylesheet" href="dist/uPlot.min.css">
-		<link rel="stylesheet" href="style.css">
+        <meta name="supported-color-schemes" content="dark light">
+        <meta name="color-scheme" content="dark light">
+
+        <link rel="preconnect" href="https://fonts.gstatic.com"> 
+        <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="./dark.css" media="(prefers-color-scheme: dark)">
+        <link rel="stylesheet" href="./light.css" media="(prefers-color-scheme: no-preference), (prefers-color-scheme: light)">
+		<link rel="stylesheet" href="./style.css">
+		<link rel="stylesheet" href="./dist/uPlot.min.css">
+
+        <script src="./table.js"></script>
+        <script src="./plot.js"></script>
+		<script defer src="./dist/uPlot.iife.min.js"></script>
+		<script defer src="./darkmode.js"></script>
 	</head>
 	<body>
-		<script src="dist/uPlot.iife.min.js"></script>
-        <script src="plot.js"></script>
-        <script src="table.js"></script>
+        <div class = "content">
         <div class="main">
+            <h1>League-a-lot</h1>
             <div class="side-by-side">
                 <div class="half">
                     <p>Query the League of Legends API to view match history plot. Click and drag on the plot to zoom in, and double-click to zoom out.</p>
@@ -27,7 +40,15 @@
             <div id="loading">
             </div>
             <div id="info"></div>
-            <!-- <div id="plot"></div> -->
         </div>
+        <div id="plot"></div>
+        </div>
+        <footer>
+            <div id="dark-mode-switch">toggle dark mode</div>
+            <div><a href="https://github.com/schuermannator/league-a-lot">view source</a></div>
+            <div>Made with ☕ by <a href="https://zachschuermann.com">Zach Schuermann</a> © 2021</div>
+        </footer>
+        <script data-goatcounter="https://lol.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 	</body>
 </html>
