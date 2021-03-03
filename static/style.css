@@ -1,18 +1,42 @@
+:root {
+    /*color-scheme: light dark;*/
+    /*supported-color-schemes: light dark;*/
+    --duration: 0.3s;
+    --timing: ease;
+}
+
 html {
     width: 100%;
     height: 100%;
-    margin: auto
+    margin: 0;
 }
 
 body {
+    color: var(--color);
+    background-color: var(--background-color);
     font-family: Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
-    font-size: 0.9em
+    font-size: 0.9em;
+    height: 100%;
+    margin: 0;
+}
+
+h1 {
+    font-family: 'Press Start 2P';
+    text-align: center
+}
+
+a {
+    color: var(--color);
+}
+
+a:hover {
+    color: var(--link);
 }
 
 .main {
     text-align: left;
     max-width: 55em;
-    margin: 3em auto 2em;
+    margin: 3em auto 3em;
     line-height: 1.5em;
 }
 
@@ -32,7 +56,7 @@ td, th {
 }
 
 tr:hover {
-    background: #e8e6e7
+    background: var(--highlight-color)
 }
 
 .half {
@@ -41,4 +65,33 @@ tr:hover {
 
 .uplot {
     margin: auto
+}
+
+/* wow... https://stackoverflow.com/questions/9519841/why-does-this-css-margin-top-style-not-work/9519896#9519896 */
+.content {
+    display: inline-block;
+    min-height: calc(100vh - 30px);
+    width: 100%
+}
+
+#dark-mode-switch {
+    display: inline-block;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#dark-mode-switch:hover {
+    color: var(--link)
+}
+
+#plot {
+    margin-bottom: 3em;
+}
+
+footer {
+    max-width: 50em;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap
 }
