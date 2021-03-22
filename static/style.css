@@ -51,6 +51,10 @@ table {
     border-collapse: collapse
 }
 
+.table {
+    max-width: 30em
+}
+
 td, th {
     padding: 0 20px
 }
