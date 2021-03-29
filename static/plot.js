@@ -1,5 +1,4 @@
-//const API = "https://leaguealot.zvs.io/";
-const API = "http://localhost:8000/";
+const API = "https://leaguealot.zvs.io/";
 
 const do_plot = (e) => {
     e.preventDefault();
