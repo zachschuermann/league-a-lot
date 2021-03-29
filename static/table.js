@@ -21,7 +21,7 @@ const table_load = () => {
 
 const init = () => {
     document.getElementById("loading").style.display = "none";
-    document.getElementById("form").onsubmit = tester;
+    document.getElementById("form").onsubmit = do_plot;
     table_load();
 }
 window.onload = init;

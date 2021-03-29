@@ -1,9 +1,10 @@
 const API = "https://leaguealot.zvs.io/";
 
-const tester = (e) => {
+const do_plot = (e) => {
     e.preventDefault();
     let username = document.getElementById("form").elements["username"].value;
     document.getElementById("loading").style.display = "block";
+    document.getElementById("form").onsubmit = null;
     plot(username);
 }
 
@@ -33,6 +34,7 @@ const plot = (name) => {
             clearInterval(interval);
             let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
             document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
+            document.getElementById("form").onsubmit = do_plot;
             table_load();
         });
 }
