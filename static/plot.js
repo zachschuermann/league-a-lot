@@ -1,10 +1,11 @@
-const API = "https://leaguealot.zvs.io/";
+//const API = "https://leaguealot.zvs.io/";
+const API = "http://localhost:8000/";
 
 const do_plot = (e) => {
     e.preventDefault();
     let username = document.getElementById("form").elements["username"].value;
     document.getElementById("loading").style.display = "block";
-    document.getElementById("form").onsubmit = null;
+    document.getElementById("form").onsubmit = (e) => { e.preventDefault(); };
     plot(username);
 }
 
