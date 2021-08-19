@@ -3,6 +3,8 @@ use std::convert::TryInto;
 use std::sync::{Arc, Mutex};
 use rocket::{Request, Response, State};
 use rocket::fairing::{Fairing, Info, Kind};
+//use rocket::response::content::Json;
+use rocket::serde::json::Json;
 use rocket::http::Header;
 use std::collections::VecDeque;
 use riven::{RiotApi, RiotApiConfig};
@@ -12,8 +14,6 @@ use league_a_lot::{get_all, get_match_history, get_match_history_since, RIOT_API
 
 #[macro_use]
 extern crate rocket;
-
-use rocket_contrib::json::Json;
 
 const RECENT_LEN: usize = 10;
 
@@ -30,7 +30,6 @@ const RECENT_LEN: usize = 10;
 /// query sled.
 ///
 /// check out sled examples/structured.rs
-
 
 // state
 struct Recent(Arc<Mutex<VecDeque<String>>>);
@@ -74,7 +73,7 @@ struct MatchInfo {
 ///    - name
 ///    - last scraped timestamp
 #[get("/matches/<summoner>")]
-async fn matches(recent: State<'_, Recent>, index: State<'_, Index>, db: State<'_, Db>, summoner: String) -> Json<MatchInfo> {
+async fn matches(recent: &State<Recent>, index: &State<Index>, db: &State<Db>, summoner: String) -> Json<MatchInfo> {
     let new_matches = match index.0
         .get(summoner.as_bytes())
         .expect("get summoner from index")
@@ -171,7 +170,7 @@ fn ivec_to_i64(v: sled::IVec) -> i64 {
 }
 
 #[get("/list")]
-async fn list(recent: State<'_, Recent>, index: State<'_, Index>) -> Json<TrackList> {
+async fn list(recent: &State<Recent>, index: &State<Index>) -> Json<TrackList> {
     let recent = recent.0.lock().expect("grab recent lock");
     let v: Vec<Tracker> = recent.iter().map(|r| (r, index.0.get(r.as_bytes())))
         .map(|(k, r)| {
@@ -190,7 +189,7 @@ async fn list(recent: State<'_, Recent>, index: State<'_, Index>) -> Json<TrackL
 }
 
 #[launch]
-fn rocket() -> rocket::Rocket {
+fn rocket() -> _ {
     let index: sled::Db = sled::open("tracker_index").expect("open tracker_index database");
     let db = sled::open("league_db").expect("open league_db database");
     let api_key = env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
@@ -200,7 +199,7 @@ fn rocket() -> rocket::Rocket {
         panic!("error setting riot api global client");
     }
 
-    rocket::ignite()
+    rocket::build()
         .manage(Recent(Arc::new(Mutex::new(VecDeque::new()))))
         .manage(Index(index))
         .manage(Db(db))

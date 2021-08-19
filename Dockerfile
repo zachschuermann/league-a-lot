@@ -1,4 +1,4 @@
-FROM rust:1.50 as builder
+FROM rust:1.54 as builder
 
 # little caching trick - edit: does this work lol
 RUN USER=root cargo new --bin league-a-lot

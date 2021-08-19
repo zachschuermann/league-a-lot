@@ -1,4 +1,4 @@
-const API = "https://leaguealot.zvs.io/";
+const API = "https://wispy-river-257.fly.dev";
 
 const do_plot = (e) => {
     e.preventDefault();
