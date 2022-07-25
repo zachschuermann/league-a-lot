@@ -1,165 +1,86 @@
-use riven::consts::Region;
-use riven::{
-    RiotApi,
-    models::match_v4::{Match, MatchReference},
-};
-use futures::future::join_all;
-use once_cell::sync::OnceCell;
+use futures::{stream, StreamExt};
+use riven::consts::PlatformRoute;
+use riven::RiotApiConfig;
+use riven::{consts::RegionalRoute, models::match_v5::Match, RiotApi};
+use serde::Serialize;
 
-pub static RIOT_API: OnceCell<RiotApi> = OnceCell::new();
-
-pub async fn get_all(matches: Vec<MatchReference>) -> (Vec<i64>, Vec<i64>) {
-    let match_futures = matches
-        .iter()
-        .map(|m| get_match(m.game_id))
-        .collect::<Vec<_>>();
-    let matches = join_all(match_futures).await;
-    let (mut times, mut values): (Vec<_>, Vec<_>) = matches
-        .iter()
-        .map(|m| {
-            match m.as_ref() {
-                Ok(match_) => Some(match_),
-                Err(e) => {
-                    println!("get match error: {}", e);
-                    None
-                },
-            }
-        })
-        .flatten() 
-        .map(|m| (m.game_creation / 1000, m.game_duration / 60))
-        .unzip();
-    times.reverse();
-    values.reverse();
-    (times, values)
+pub struct Client {
+    riot: RiotApi,
 }
 
-pub async fn get_match_history_since(summoner: &str, since: i64) -> Result<Vec<MatchReference>, &str> {
-    let name = summoner;
-    let summoner = RIOT_API.get().expect("riot api init")
-        .summoner_v4()
-        .get_by_summoner_name(Region::NA, summoner)
-        .await;
-
-    // TODO ugly
-    if summoner.is_err() {
-        return Err("failed get summoner request");
-    }
-    let summoner = summoner.unwrap();
-    if summoner.is_none() {
-        return Err("no summoner found");
-    }
-    let summoner = summoner.unwrap();
-
-    let mut matches = vec![];
-    let match_list = RIOT_API.get().expect("riot api init")
-        .match_v4()
-        .get_matchlist(
-            Region::NA,
-            &summoner.account_id,
-            Some(since * 1000 + 1), // need timestamp in ms
-            None, // Some(0),
-            None,
-            None, // Some(start + 604800000),
-            None,
-            None,
-            None,
-        )
-        .await;
-    // .expect("Get matchlist failed.")
-    // .expect("No matchlist for account id.");
-    // TODO ugly
-    if match_list.is_err() {
-        return Err("Get matchlist failed.");
-    }
-    let match_list = match_list.unwrap();
-    if match_list.is_none() {
-        println!("no new matches for {} since {}", name, since);
-        return Ok(vec![]);
-    }
-    let mut match_list = match_list.unwrap();
-    if match_list.matches.len() > 99 {
-        println!("over 100 found. scraping entire history.");
-        return get_match_history(name).await;
-    }
-    matches.append(&mut match_list.matches);
-
-    println!("found {} matches for {} since {}", matches.len(), name, since);
-    Ok(matches)
+#[derive(Serialize)]
+pub struct TimeSeries {
+    datetimes: Vec<i64>,
+    playtimes: Vec<i64>,
 }
 
-pub async fn get_match_history(summoner: &str) -> Result<Vec<MatchReference>, &str> {
-    let name = summoner;
-    let summoner = RIOT_API.get().expect("riot api init")
-        .summoner_v4()
-        .get_by_summoner_name(Region::NA, summoner)
-        .await;
-
-    // TODO ugly
-    if summoner.is_err() {
-        return Err("failed get summoner request");
+impl Client {
+    /// create a new client
+    pub fn new() -> Self {
+        let api_key = std::env::var("RIOTAPIKEY").expect("RIOTAPIKEY environment variable set.");
+        let riot_config = RiotApiConfig::with_key(api_key);
+        let riot = RiotApi::new(riot_config.preconfig_throughput());
+        Client { riot }
     }
-    let summoner = summoner.unwrap();
-    if summoner.is_none() {
-        return Err("no summoner found");
-    }
-    let summoner = summoner.unwrap();
 
-    // println!("\n{}\n", &summoner.account_id);
-
-    let mut start_index = 0;
-    let mut matches = vec![];
-    loop {
-        let match_list = RIOT_API.get().expect("riot api init")
-            .match_v4()
-            .get_matchlist(
-                Region::NA,
-                &summoner.account_id,
-                None,              // Some(start),
-                Some(start_index), // Some(0),
+    /// get timeseries of match times for the given summoner
+    pub async fn get_match_times(
+        &self,
+        summoner: &str,
+    ) -> Result<TimeSeries, &dyn std::error::Error> {
+        // 1. get summoner puuid
+        // 2. get most recent 100 matches
+        // 3. return two timeseries for match datetimes and playtimes
+        let summoner = self
+            .riot
+            .summoner_v4()
+            .get_by_summoner_name(PlatformRoute::NA1, summoner)
+            .await
+            .unwrap()
+            .unwrap();
+        let match_ids = self
+            .riot
+            .match_v5()
+            .get_match_ids_by_puuid(
+                RegionalRoute::AMERICAS,
+                &summoner.puuid,
+                Some(100),
                 None,
-                None, // Some(start + 604800000),
+                None,
                 None,
                 None,
                 None,
             )
+            .await
+            .unwrap();
+        let matches: Vec<_> = stream::iter(match_ids)
+            .map(|id| self.riot.match_v5().get_match(RegionalRoute::AMERICAS, &id))
+            .buffer_unordered(100)
+            .take(100)
+            .collect()
             .await;
+        let mut timeseries = matches
+            .iter()
+            .map(|m| {
+                let m: &Match = m.as_ref().unwrap().as_ref().unwrap();
+                (
+                    m.info.game_creation / 1000,
+                    match m.info.game_end_timestamp {
+                        Some(_) => m.info.game_duration / 60,
+                        None => m.info.game_duration / 60_000,
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
 
-        // TODO ugly
-        if match_list.is_err() {
-            return Err("Get matchlist failed.");
-        }
-        let match_list = match_list.unwrap();
-        if match_list.is_none() {
-            return Err("No matchlist for account id.");
-        }
-        let mut match_list = match_list.unwrap();
-        if match_list.matches.is_empty() {
-            break;
-        }
-        matches.append(&mut match_list.matches);
-        start_index += 100;
+        timeseries.sort_unstable();
+        let (datetimes, playtimes) = timeseries.into_iter().unzip();
+
+        Ok(TimeSeries {
+            datetimes,
+            playtimes,
+        })
     }
-
-    println!("found {} matches for {}", matches.len(), name);
-    Ok(matches)
-}
-
-pub async fn get_match(game_id: i64) -> Result<Match, &'static str> {
-    // do x retries max
-    //for n in 1..=MAX_RETRIES {
-        //println!("try {}", n);
-    let match_ = RIOT_API.get().expect("riot api init").match_v4().get_match(Region::NA, game_id).await;
-
-    if let Ok(ok_match) = match_ {
-        if let Some(m) = ok_match {
-            return Ok(m);
-        }
-    }
-        // backoff
-        //sleep(Duration::from_secs(n.pow(2) as u64)).await;
-    //}
-
-    Err("Failed to get match")
 }
 
 #[cfg(test)]
@@ -167,8 +88,16 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn test_since() {
-        let matches = get_match_history_since("test", 1609522696000).await.expect("this works");
-        assert_eq!(matches.len(), 10);
+    async fn test_get_match() {
+        let riot = Client::new();
+        let id = "NA1_4160719344";
+        let match_ = riot
+            .riot
+            .match_v5()
+            .get_match(RegionalRoute::AMERICAS, &id)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(match_.metadata.match_id, id.to_string());
     }
 }

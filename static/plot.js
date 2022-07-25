@@ -1,4 +1,4 @@
-const API = "https://wispy-river-257.fly.dev/";
+const API = "https://lol.zvs.io/";
 
 const do_plot = (e) => {
     e.preventDefault();
@@ -25,17 +25,12 @@ const plot = (name) => {
     fetch(API + 'matches/' + name)
         .then(response => response.json())
         .then(data => {
-            if (data['ok']) {
-                plotter(name, data['times'], data['values']);
-            } else {
-                alert("unable to plot " + name);
-            }
+            plotter(name, data['datetimes'], data['playtimes']);
             document.getElementById("loading").style.display = "none";
             clearInterval(interval);
-            let hours = data['values'].reduce((a, b) => a + b, 0) / 60;
-            document.getElementById("info").innerHTML = "Found " + data['times'].length + " matches for " + name + ". Total play time is " + hours + " hours.";
+            let hours = data['playtimes'].reduce((a, b) => a + b, 0) / 60;
+            document.getElementById("info").innerHTML = "Found " + data['playtimes'].length + " matches for " + name + ". Total play time is " + hours.toFixed(1) + " hours.";
             document.getElementById("form").onsubmit = do_plot;
-            table_load();
         });
 }
 
@@ -102,3 +97,8 @@ function getSize() {
 	}
 }
 
+const init = () => {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("form").onsubmit = do_plot;
+}
+window.onload = init;
