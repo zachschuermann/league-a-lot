@@ -31,6 +31,7 @@ ENV TZ=Etc/UTC \
     #&& mkdir -p ${APP}
 
 COPY --from=builder /league-a-lot/target/release/league-a-lot ${APP}/league-a-lot
+COPY --from=builder /league-a-lot/static ${APP}/static
 
 #RUN chown -R $APP_USER:$APP_USER ${APP}
 

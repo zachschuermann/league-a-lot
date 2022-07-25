@@ -1,5 +1,6 @@
-app = "wispy-river-257"
+# fly.toml file generated for league on 2022-07-24T20:43:45-07:00
 
+app = "league"
 kill_signal = "SIGINT"
 kill_timeout = 5
 
@@ -14,7 +15,6 @@ kill_timeout = 5
   internal_port = 8000
   protocol = "tcp"
   script_checks = []
-
   [services.concurrency]
     hard_limit = 25
     soft_limit = 20
@@ -29,7 +29,7 @@ kill_timeout = 5
     port = 443
 
   [[services.tcp_checks]]
-    grace_period = 1000 #ms
-    interval = 15000 #ms
+    grace_period = 1000
+    interval = 15000
     restart_limit = 6
-    timeout = 2000 #ms
+    timeout = 2000
